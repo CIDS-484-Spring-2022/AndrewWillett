@@ -145,6 +145,8 @@ mmStats <- mmStats %>%
   mutate(WLnum = str_replace(WLnum, 'L', '0')) %>% 
   mutate(WLnum = as.numeric(WLnum))
 
+mmStats %>% view()
+
 mmStats %>% 
   group_by(FGA) %>% 
   mutate(WLAvg = mean(WLnum)) %>% 
@@ -157,9 +159,108 @@ tMod <- lm(WLnum~Score+FGM+FGA+FGM3+FGA3+FTM+FTA+OR+DR+Ast+TO+Stl+Blk+PF,
 summary(tMod)
 
 
+torSeed <- read_excel('NCAATourneySeeds.xlsx')
+
+mmStats <- mmStats %>% 
+  inner_join(torSeed) %>% 
+  mutate(Seed = str_extract(Seed, "[0-9]+")) %>% 
+  mutate(Seed = as.numeric(Seed))
+
+tMod <- lm(WLnum~Score+FGM+FGA+FGM3+FGA3+FTA+OR+DR+Ast+TO+Stl+Blk+PF+Seed,
+           data = mmStats)
+summary(tMod)
+
+gonz <- data.frame("Score"= 87.8, "FGM"= 32.9, "FGA"= 62.4, "FGM3"= 8.4, 
+                  "FGA3"= 22.1, "FTA"= 18.6, "OR"= 9.4, "DR"= 32.1, "Ast"= 18.2,
+                  "TO"= 11.8, "Stl"= 6.7, "Blk"= 5.9, "PF"= 15.4, "Seed"= 1)
+predict(tMod, gonz, interval = 'predict')
+
+gast <- data.frame("Score"= 70.6, "FGM"= 25, "FGA"= 62, "FGM3"= 7.7, 
+                   "FGA3"= 23.4, "FTA"= 18.1, "OR"= 13.4, "DR"= 24, "Ast"= 13.5,
+                   "TO"= 11.9, "Stl"= 8.9, "Blk"= 4.5, "PF"= 15.8, "Seed"= 16)
+predict(tMod, gast, interval = 'predict')
+
+gast <- data.frame("Score"= 70.6, "FGM"= 25, "FGA"= 62, "FGM3"= 7.7, 
+                   "FGA3"= 23.4, "FTA"= 18.1, "OR"= 13.4, "DR"= 24, "Ast"= 13.5,
+                   "TO"= 11.9, "Stl"= 8.9, "Blk"= 4.5, "PF"= 15.8, "Seed"= 16)
+predict(tMod, gast, interval = 'predict')
+
+ariz <- data.frame("Score"= 84.6, "FGM"= 30.4, "FGA"= 61.4, "FGM3"= 7.8, 
+                   "FGA3"= 21.9, "FTA"= 21.6, "OR"= 11.4, "DR"= 29.9, "Ast"= 19.9,
+                   "TO"= 6.7, "Stl"= 6.7, "Blk"= 5.7, "PF"= 16.5, "Seed"= 1)
+predict(tMod, ariz, interval = 'predict')
+
+ariz <- data.frame("Score"= 84.6, "FGM"= 30.4, "FGA"= 61.4, "FGM3"= 7.8, 
+                   "FGA3"= 21.9, "FTA"= 21.6, "OR"= 11.4, "DR"= 29.9, "Ast"= 19.9,
+                   "TO"= 6.7, "Stl"= 6.7, "Blk"= 5.7, "PF"= 16.5, "Seed"= 1)
+predict(sPrediction, ariz, interval = 'predict')
+
+regStats16_18 <- 
+  regStats %>% 
+  filter(Season >= 2016)
+
+mod16_18 <- lm(WLnum~Score+FGM+FGA+FGM3+FGA3+FTA+OR+DR+Ast+TO+Stl+Blk+PF,
+               data = regStats16_18)
+summary(mod16_18)
+
+with(summary(regsubsets(WLnum~Score+FGM+FGA+FGM3+FGA3+FTM+FTA+OR+DR+
+                          Ast+TO+Stl+Blk+PF, data = regStats16_18)),
+     data.frame(adjr2, cp, outmat))
+
+regStats03_05 <- 
+  regStats %>% 
+  filter(Season <= 2005)
+
+mod03_05 <- lm(WLnum~Score+FGM+FGA+FGM3+FGA3+FTA+OR+DR+Ast+TO+Stl+Blk+PF,
+               data = regStats03_05)
+summary(mod03_05)
+
+with(summary(regsubsets(WLnum~Score+FGM+FGA+FGM3+FGA3+FTM+FTA+OR+DR+
+                          Ast+TO+Stl+Blk+PF, data = regStats03_05)),
+     data.frame(adjr2, cp, outmat))
+
+sPrediction <- lm(WLnum~Score+FGM+FGA+FGM3+FGA3+FTA+OR+DR+Ast+TO+Stl+Blk+PF,
+                  data = regStats)
+summary(sPrediction)
+
+tMod <- lm(WLnum~Score+FGM+FGA+FGM3+FGA3+FTA+OR+DR+Ast+TO+Stl+Blk+PF,
+           data = mmStats)
+summary(tMod)
+
+with(summary(regsubsets(WLnum~Score+FGM+FGA+FGM3+FGA3+FTM+FTA+OR+DR+
+                          Ast+TO+Stl+Blk+PF, data = regStats)),
+     data.frame(adjr2, cp, outmat))
+
+with(summary(regsubsets(WLnum~Score+FGM+FGA+FGM3+FGA3+FTM+FTA+OR+DR+
+                          Ast+TO+Stl+Blk+PF, data = mmStats)),
+     data.frame(adjr2, cp, outmat))
 
 
 
+
+mmStats %>% 
+  group_by(Ast) %>% 
+  mutate(avgWL = mean(WLnum)) %>% 
+  ggplot(aes(Ast, avgWL)) +
+  geom_point()+
+  geom_smooth(method = lm, se = FALSE) +
+  xlab("Assists") + ylab("Average Win %")
+
+mmStats %>% 
+  group_by(FGM) %>% 
+  mutate(avgWL = mean(WLnum)) %>% 
+  ggplot(aes(FGM, avgWL)) +
+  geom_point()+
+  geom_smooth(method = lm, se = FALSE) +
+  xlab("Field Goals Made") + ylab("Average Win %")
+
+regStats %>% 
+  group_by(Ast) %>% 
+  mutate(avgWL = mean(WLnum)) %>% 
+  ggplot(aes(Ast, avgWL)) +
+  geom_point() +
+  geom_smooth(method = lm, se = FALSE) +
+  xlab("Assists") + ylab("Win %")
 
 
 
